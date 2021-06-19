@@ -1,7 +1,27 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_practice/utils/log.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+
+StringBuffer x = StringBuffer();
 
 void main() {
-  runApp(MyApp());
+  Log.setEnableLog(true);
+
+  FlutterError.onError = (detail) {
+    Log.e(detail.exception.toString() + "\n" + detail.stack.toString());
+  };
+
+  runZonedGuarded(() {
+    runApp(MyApp());
+  }, (error, stack) {
+    Log.e(error.toString() + "\n" + stack.toString());
+  }, zoneSpecification: ZoneSpecification(
+    print: (Zone self, ZoneDelegate parent, Zone zone, String line) {
+      parent.print(zone, "$line"); // 收集日志
+    },
+  ));
 }
 
 class MyApp extends StatelessWidget {
@@ -56,7 +76,19 @@ class _MyHomePageState extends State<MyHomePage> {
       // _counter without calling setState(), then the build method would not be
       // called again, and so nothing would appear to happen.
       _counter++;
+      Log.d("_incrementCounter");
+      PackageInfo.fromPlatform().then((_) {
+        throw "error in first error-zone";
+      });
+
+      throw Exception("自定义异常");
     });
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
   }
 
   @override
@@ -107,7 +139,7 @@ class _MyHomePageState extends State<MyHomePage> {
         onPressed: _incrementCounter,
         tooltip: 'Increment',
         child: Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      ), //// This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
